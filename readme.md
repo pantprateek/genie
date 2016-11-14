@@ -5,8 +5,6 @@ Playlist is automatically formed for all the videos hosted in /video and you can
 is used to process the speech to text and then text is sent to the server .Server in turn will check for meaniningful  commands  in the text mentioned in **cmdstr** array in the server
 and HTML5 player invokes the player functionality based on the command. 
 
-This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
-
 ##Improvements##
 I'm new to these technologies and learning further. If you have suggestions or improvements,please do mail me at prateek1510@gmail.com.I have future plans to use it for youtube videos.
 
