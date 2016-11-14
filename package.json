@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "description": "Voice Controlled Player",
   "dependencies": {
-    "express": "^5.0.0-alpha.1",
-    "socket.io": "*"
+     "express": "^5.0.0-alpha.1",
+     "socket.io": "*"
   }
 }
