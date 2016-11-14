@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+
+<body bgcolor='black' text='white'>
+
+<title>Voice command Video Player</title>
+
+<p>
+<div align="center">
+      <img id="startImage" src="genie.png" alt="Start" height="120" width="120">
+</div>
+</p>
+
+<div id="media-player">
+      <table align=center><tr><td>
+	  <video id="video" class="centre"  controls> 
+          <source id="mvsrc"  type="video/mp4"/>
+          </video>
+      </td></tr></table>
+</div>
+<p>
+<div id="results" align="center">
+    <span id="textSpan" class="final"></span>
+</div>
+</p>
+
+</body>
+
+<!-- JavaScript code below -->
+
+<!-- Dependancies -->
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+
+<script>
+    
+    
+    // Declarations
+    var socket = io().connect('http://localhost:8080');
+    var parsingInProgress = false;
+    var lastCommand = "";
+    var command = "";
+    
+    // Not all browsers support webkitSpeechRecognition (only Chrome at the
+    // time of writing).
+    if (window.hasOwnProperty('webkitSpeechRecognition')) {
+       
+
+        var recognition = new webkitSpeechRecognition();
+
+        recognition.continuous = true;
+
+        // Do we want interim results or not (true means yes)
+        recognition.interimResults = true;
+
+        // Triggered on start of Voice Recognition attempt
+        recognition.onstart = function() {
+
+        parsingInProgress = true;
+           
+        }
+
+        recognition.onresult = function(event) {
+
+            for (var i = event.resultIndex; i < event.results.length; ++i) {
+
+                // Pick up the command string
+                command = event.results[i][0].transcript ;
+
+                // If the latest command is different from the previous then only send to server
+                
+                if (command != lastCommand){
+
+                    // Send command back to Web Server
+                    socket.emit('command', event.results[i][0].transcript);                  
+                }
+
+                
+                // Ensure that the command is stored for comparison against the
+                // the next command.
+                lastCommand = command;
+
+            }
+           
+        }
+         
+          // Triggered on parsing error
+          recognition.onerror = function(event) {
+
+          // Report error with text code and error image
+          errorReport.innerHTML = "Error Code: " + event.error;
+          recognition.stop(); 
+          parsingInProgress = false;
+        }
+
+         // Triggered on parsing end
+         recognition.onend = function() {
+
+         parsingInProgress = false;
+
+       }
+
+    }
+
+  document.addEventListener("DOMContentLoaded", function() { initialiseMediaPlayer(); }, false);
+
+  var v,index=0;
+  var zoom;
+  var sources =[];
+
+  function initialiseMediaPlayer(){
+     recognition.lang = 'en-GB'
+     recognition.start();
+     v = document.getElementsByTagName("video")[0];
+     zoom=false;
+     rate=false;
+     //get video playlist from server 
+     $.get("/video", function(data, status) {
+     for(var i in data)
+       sources.push([data [i]]);
+
+     var playstring =  "<font color='gray'><i>Playing Video '" + sources[index]+ "'. </i></font><br>" ;
+     textSpan.innerHTML=playstring;
+     var mv = document.getElementById('mvsrc');
+     mv.src =sources[index];
+     v.load();
+  });
+   
+}
+
+
+    socket.on('new-message', function(msg) {
+                   
+          if(msg=="play")
+          {
+             v.loop=true;
+             v.muted=false;
+             v.play();
+              
+          }
+          if(msg=="stop" || msg=="top"  )
+          { 
+              v.pause();
+          } 
+         
+         if(msg=="mute" )
+          { 
+             v.muted=true;
+          } 
+
+         if(msg=="back" || msg=="bak"  ){
+        
+             v.currentTime = v.currentTime -1 ; 
+          }
+
+          if(msg=="forward" ){
+        
+            v.currentTime = v.currentTime +1 ; 
+          
+          }
+
+          if(msg== "zoom" )
+          {
+              if(zoom == false){
+             
+                v.width = 1920;
+                v.height =1080;
+                zoom=true;
+              }
+              else {
+                
+                v.width = 640;
+                v.height =480;
+                zoom=false;   
+              } 
+          }
+
+          if(msg== "next" )
+          {         
+            index=index+1;
+            index=index%sources.length;
+            v.setAttribute("src",sources[index]);
+            v.load();
+            playstring =  "<font color='gray'><i>Playing Video '" + sources[index]+ "'. </i></font><br>" ;
+            textSpan.innerHTML=playstring;
+          }
+
+  
+    }); 
+   
+</script>
